@@ -8,7 +8,7 @@ const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin", "lat
 
 export const metadata: Metadata = {
   title: { default: BRAND.name, template: `%s · ${BRAND.short}` },
-  description: `${BRAND.tagline} — goście, budżet, usługodawcy, zadania.`,
+  description: "Planowanie ślubu — goście, budżet, usługodawcy, zadania.",
   robots: { index: false, follow: false },
 };
 

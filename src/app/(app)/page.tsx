@@ -80,7 +80,9 @@ async function Dashboard() {
                 ustawienia
               </Link>
             </h1>
-          ) : days >= 0 ? (
+          ) : days === 0 ? (
+            <h1 className="mt-2 font-display text-4xl sm:text-5xl">To już dziś!</h1>
+          ) : days > 0 ? (
             <>
               <h1 className="mt-2 font-display text-6xl leading-none sm:text-7xl">{days}</h1>
               <p className="mt-2 text-lg opacity-90">

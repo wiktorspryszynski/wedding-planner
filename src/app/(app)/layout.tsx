@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
-import { BRAND } from "@/lib/brand";
+import { WeddingDate } from "@/components/wedding-date";
 import { BottomNav, SideNav } from "./nav";
 
 async function UserBox() {
@@ -34,8 +34,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <span className="block font-display text-xl font-medium">
             <span className="text-gold">&amp;</span> Guzowska
           </span>
-          <span className="mt-1 block text-xs text-muted italic">{BRAND.tagline}</span>
         </Link>
+        <Suspense>
+          <WeddingDate className="-mt-4" />
+        </Suspense>
         <SideNav />
         <div className="mt-auto">
           <Suspense>

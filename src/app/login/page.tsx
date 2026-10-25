@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Card } from "@/components/ui";
-import { BRAND } from "@/lib/brand";
+import { Suspense } from "react";
+import { WeddingDate } from "@/components/wedding-date";
 import { LoginForm } from "./form";
 
 export const metadata: Metadata = { title: "Logowanie" };
@@ -14,7 +15,11 @@ export default function LoginPage() {
           <br />
           <span className="text-gold">&amp;</span> Guzowska
         </h1>
-        <p className="mt-2 mb-8 text-center text-sm text-muted italic">{BRAND.tagline}</p>
+        <div className="mt-3 mb-8 flex h-5 justify-center">
+          <Suspense>
+            <WeddingDate className="text-sm" />
+          </Suspense>
+        </div>
         <Card>
           <LoginForm />
         </Card>
