@@ -1,11 +1,12 @@
 "use server";
 
-import { eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import Papa from "papaparse";
 import { db, schema, type DB } from "@/db";
 import { GUEST_TYPES, RSVP, SIDES } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { bool, int, oneOf, reqStr, str } from "@/lib/form";
+import { adaptLastName, guestName, PLUS_ONE, suggestHousehold } from "@/lib/guests";
 import { RSVP_LABEL } from "@/lib/labels";
 import { done } from "@/lib/mutate";
 
@@ -54,7 +55,6 @@ function values(fd: FormData, d: Q) {
     diet: str(fd, "diet"),
     allergies: str(fd, "allergies"),
     needsAccommodation: bool(fd, "needsAccommodation"),
-    needsTransport: bool(fd, "needsTransport"),
     phone: str(fd, "phone"),
     notes: str(fd, "notes"),
     householdId: householdId(d, str(fd, "household")),
@@ -74,7 +74,73 @@ export async function saveGuest(fd: FormData) {
     prune(tx);
     return gid;
   });
-  done(user, "guest", id ? "update" : "create", `${id ? "Zmieniono" : "Dodano"} gościa: ${v.firstName} ${v.lastName}`, guestId);
+  done(user, "guest", id ? "update" : "create", `${id ? "Zmieniono" : "Dodano"} gościa: ${guestName(v)}`, guestId);
+}
+
+/**
+ * Adds a whole invitation at once: a person, a couple or a family, optionally with an unnamed +1.
+ * Repeated fields (person.*) come in row order. Adults and children without a last name inherit it
+ * from the first row; named companions (plus_one) don't. If a household with the same name exists,
+ * the people are added to it.
+ */
+export async function addHousehold(_prev: string | null, fd: FormData): Promise<string> {
+  const user = await requireUser();
+  const all = (k: string) => fd.getAll(k).map((v) => String(v).trim());
+  const firstNames = all("person.firstName");
+  const lastNames = all("person.lastName");
+  const types = all("person.type");
+  const diets = all("person.diet");
+  const plusOne = bool(fd, "plusOne");
+
+  const people = firstNames
+    .map((firstName, i) => ({
+      firstName,
+      lastName: lastNames[i] ?? "",
+      type: (GUEST_TYPES as readonly string[]).includes(types[i]) ? (types[i] as (typeof GUEST_TYPES)[number]) : "adult",
+      diet: diets[i] || null,
+    }))
+    .filter((p) => p.firstName);
+  if (people.length === 0) return "Wpisz imię przynajmniej jednej osoby.";
+
+  // When adding to an existing invitation (from its header), missing side / last name come from the family.
+  const given = str(fd, "household");
+  const existing = given
+    ? db()
+        .select({ side: guests.side, lastName: guests.lastName })
+        .from(guests)
+        .innerJoin(households, eq(guests.householdId, households.id))
+        .where(and(eq(households.name, given), ne(guests.type, "plus_one")))
+        .orderBy(asc(guests.id))
+        .get()
+    : undefined;
+
+  const familyLast = people.find((p) => p.type !== "plus_one" && p.lastName)?.lastName || existing?.lastName || "";
+  for (const p of people) if (!p.lastName && p.type !== "plus_one") p.lastName = adaptLastName(familyLast, p.firstName);
+  if (plusOne) people.push({ firstName: PLUS_ONE, lastName: "", type: "plus_one", diet: null });
+
+  const name = given ?? suggestHousehold(people.filter((p) => p.firstName !== PLUS_ONE), plusOne);
+  const shared = {
+    side: str(fd, "side") ? oneOf(fd, "side", SIDES, "both") : (existing?.side ?? "both"),
+    rsvp: oneOf(fd, "rsvp", RSVP, "pending"),
+    needsAccommodation: bool(fd, "needsAccommodation"),
+  };
+  const tags = str(fd, "tags");
+
+  const d = db();
+  d.transaction((tx) => {
+    const hid = householdId(tx, name);
+    for (const p of people) {
+      const gid = tx
+        .insert(guests)
+        .values({ ...p, ...shared, householdId: hid })
+        .returning({ id: guests.id })
+        .get().id;
+      setTags(tx, gid, tags);
+    }
+  });
+  const who = people.map((p) => guestName({ ...p, household: name })).join(", ");
+  done(user, "guest", "create", `Dodano zaproszenie: ${name} (${who})`);
+  return `Dodano: ${name} — ${people.length} ${people.length === 1 ? "osoba" : people.length < 5 ? "osoby" : "osób"}.`;
 }
 
 export async function setRsvp(fd: FormData) {
@@ -82,7 +148,7 @@ export async function setRsvp(fd: FormData) {
   const id = int(fd, "id")!;
   const rsvp = oneOf(fd, "rsvp", RSVP, "pending");
   const g = db().update(guests).set({ rsvp }).where(eq(guests.id, id)).returning().get();
-  done(user, "guest", "update", `RSVP ${g.firstName} ${g.lastName}: ${RSVP_LABEL[rsvp]}`, id);
+  done(user, "guest", "update", `RSVP ${guestName(g)}: ${RSVP_LABEL[rsvp]}`, id);
 }
 
 export async function deleteGuest(fd: FormData) {
@@ -92,7 +158,7 @@ export async function deleteGuest(fd: FormData) {
   const g = d.delete(guests).where(eq(guests.id, id)).returning().get();
   if (!g) return;
   prune(d);
-  done(user, "guest", "delete", `Usunięto gościa: ${g.firstName} ${g.lastName}`, id);
+  done(user, "guest", "delete", `Usunięto gościa: ${guestName(g)}`, id);
 }
 
 export async function saveHousehold(fd: FormData) {
@@ -124,7 +190,6 @@ const MAP: Record<string, string> = {
   dieta: "diet", diet: "diet",
   alergie: "allergies", allergies: "allergies",
   nocleg: "needsAccommodation", accommodation: "needsAccommodation",
-  transport: "needsTransport",
   telefon: "phone", phone: "phone",
   tagi: "tags", tags: "tags",
   notatki: "notes", uwagi: "notes", notes: "notes",
@@ -172,7 +237,6 @@ export async function importGuests(_prev: string | null, fd: FormData): Promise<
           diet: r.diet?.trim() || null,
           allergies: r.allergies?.trim() || null,
           needsAccommodation: yes(low("needsAccommodation")),
-          needsTransport: yes(low("needsTransport")),
           phone: r.phone?.trim() || null,
           notes: r.notes?.trim() || null,
           householdId: householdId(t, r.household?.trim() || null),

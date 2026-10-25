@@ -39,6 +39,10 @@ Checks: `npm run build` (includes `tsc`) and `npm run lint`. There is **no test 
   no client JS. Client components live in `src/components/client.tsx` and `seating/canvas.tsx`.
 - Users live in the `users` table (bcrypt hashes), managed only by `scripts/set-user.mjs`. No registration.
 - `households.rsvp_token` is reserved for the public RSVP page (v2).
+- Guests are added per invitation (`addHousehold` + `guests/household-form.tsx`). Households are
+  matched **by name**: adding to an existing name appends people to it. An unnamed +1 is stored as
+  `firstName = "+1"`, type `plus_one`; always render names through `guestName()` in `src/lib/guests.ts`.
+  Inherited last names are gender-adapted (`adaptLastName`: Kowalski → Kowalska for "Anna").
 
 ## Schema changes
 

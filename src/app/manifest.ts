@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { BRAND } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Nasz ślub",
-    short_name: "Ślub",
+    name: BRAND.name,
+    short_name: BRAND.short,
     start_url: "/",
     display: "standalone",
     background_color: "#f7f3ec",

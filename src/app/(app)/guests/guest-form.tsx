@@ -14,7 +14,6 @@ export type GuestFormValues = {
   diet?: string | null;
   allergies?: string | null;
   needsAccommodation?: boolean;
-  needsTransport?: boolean;
   phone?: string | null;
   notes?: string | null;
   household?: string | null;
@@ -78,7 +77,6 @@ export function GuestForm({ g = {}, households }: { g?: GuestFormValues; househo
       </Field>
       <div className="col-span-2 flex flex-col justify-end gap-2 sm:col-span-1">
         <Check name="needsAccommodation" label="Nocleg" defaultChecked={g.needsAccommodation} />
-        <Check name="needsTransport" label="Transport" defaultChecked={g.needsTransport} />
       </div>
       <div className="col-span-2 sm:col-span-4">
         <SubmitButton>{g.id ? "Zapisz zmiany" : "Dodaj gościa"}</SubmitButton>

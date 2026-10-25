@@ -60,7 +60,6 @@ export const guests = sqliteTable("guests", {
   diet: text("diet"),
   allergies: text("allergies"),
   needsAccommodation: integer("needs_accommodation", { mode: "boolean" }).notNull().default(false),
-  needsTransport: integer("needs_transport", { mode: "boolean" }).notNull().default(false),
   tableId: integer("table_id").references(() => tables.id, { onDelete: "set null" }),
   seatNo: integer("seat_no"),
   phone: text("phone"),

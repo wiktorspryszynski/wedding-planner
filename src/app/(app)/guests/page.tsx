@@ -8,9 +8,11 @@ import { RSVP, SIDES } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { GUEST_TYPE_LABEL, RSVP_LABEL, SIDE_LABEL } from "@/lib/labels";
 import { formatDate } from "@/lib/dates";
+import { guestName } from "@/lib/guests";
 import { formatPLN } from "@/lib/money";
 import { loadGuests, type GuestRow } from "./data";
 import { GuestForm } from "./guest-form";
+import { HouseholdForm } from "./household-form";
 import { ImportForm } from "./import-form";
 
 export const metadata: Metadata = { title: "Goście" };
@@ -48,7 +50,6 @@ function matches(g: GuestRow, f: Filters) {
   if (f.tag && !g.tags.includes(f.tag)) return false;
   if (f.flag === "diet" && !g.diet && !g.allergies) return false;
   if (f.flag === "accommodation" && !g.needsAccommodation) return false;
-  if (f.flag === "transport" && !g.needsTransport) return false;
   if (f.flag === "noTable" && (g.tableId || g.rsvp === "no")) return false;
   return true;
 }
@@ -93,8 +94,8 @@ async function Guests({ searchParams }: { searchParams: PageProps<"/guests">["se
       </div>
 
       <Card>
-        <Disclosure summary={<span className="text-sm font-medium text-accent">+ Dodaj gościa</span>}>
-          <GuestForm households={households} />
+        <Disclosure summary={<span className="text-sm font-medium text-accent">+ Dodaj zaproszenie (osoba, para, rodzina)</span>}>
+          <HouseholdForm households={households} />
         </Disclosure>
         <hr className="my-4 border-line" />
         <Disclosure summary={<span className="text-sm font-medium text-muted">Import z CSV</span>}>
@@ -128,7 +129,6 @@ async function Guests({ searchParams }: { searchParams: PageProps<"/guests">["se
           <option value="">Bez filtra</option>
           <option value="diet">Dieta / alergie</option>
           <option value="accommodation">Potrzebny nocleg</option>
-          <option value="transport">Potrzebny transport</option>
           <option value="noTable">Bez stołu</option>
         </Select>
         <Button variant="outline">Filtruj</Button>
@@ -166,14 +166,11 @@ function GuestItem({ g, households }: { g: GuestRow; households: string[] }) {
       <Disclosure
         summary={
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-medium">
-              {g.firstName} {g.lastName}
-            </span>
+            <span className="font-medium">{guestName(g)}</span>
             <Badge>{SIDE_LABEL[g.side]}</Badge>
             {g.type !== "adult" && <Badge tone="gold">{GUEST_TYPE_LABEL[g.type]}</Badge>}
             {(g.diet || g.allergies) && <Badge tone="rose">{[g.diet, g.allergies].filter(Boolean).join(", ")}</Badge>}
             {g.needsAccommodation && <Badge>nocleg</Badge>}
-            {g.needsTransport && <Badge>transport</Badge>}
             {g.table && <Badge tone="green">{g.table}</Badge>}
             {g.tags.map((t) => (
               <span key={t} className="text-xs text-muted">#{t}</span>
@@ -196,7 +193,7 @@ function GuestItem({ g, households }: { g: GuestRow; households: string[] }) {
               </AutoSelect>
             </form>
             <div className="ml-auto">
-              <DeleteButton action={deleteGuest} id={g.id} confirm={`Usunąć ${g.firstName} ${g.lastName}?`} />
+              <DeleteButton action={deleteGuest} id={g.id} confirm={`Usunąć ${guestName(g)}?`} />
             </div>
           </div>
           <GuestForm g={{ ...g, tags: g.tags.join(", ") }} households={households} />
@@ -244,6 +241,10 @@ function HouseholdHeader({ name, guests }: { name: string; guests: GuestRow[] })
           <SubmitButton variant="outline">Zapisz</SubmitButton>
         </div>
       </form>
+      <div className="mt-4 border-t border-line pt-4">
+        <h4 className="mb-3 text-xs font-medium text-muted">Dopisz osobę do tego zaproszenia</h4>
+        <HouseholdForm households={[]} household={name} />
+      </div>
     </Disclosure>
   );
 }

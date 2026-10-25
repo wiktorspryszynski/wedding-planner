@@ -3,6 +3,7 @@
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { requireUser } from "@/lib/auth";
+import { guestName } from "@/lib/guests";
 import { int, oneOf, reqStr } from "@/lib/form";
 import { done, refreshAll } from "@/lib/mutate";
 
@@ -50,7 +51,7 @@ export async function assignGuest(guestId: number, tableId: number | null) {
   const g = d.update(guests).set({ tableId }).where(eq(guests.id, guestId)).returning().get();
   if (!g) return;
   const t = tableId ? d.select().from(tables).where(eq(tables.id, tableId)).get() : null;
-  done(user, "guest", "update", `${g.firstName} ${g.lastName} → ${t ? t.name : "bez stołu"}`, guestId);
+  done(user, "guest", "update", `${guestName(g)} → ${t ? t.name : "bez stołu"}`, guestId);
 }
 
 export async function assignGuestForm(fd: FormData) {

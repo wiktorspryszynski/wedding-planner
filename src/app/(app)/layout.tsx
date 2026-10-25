@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { BRAND } from "@/lib/brand";
 import { BottomNav, SideNav } from "./nav";
 
 async function UserBox() {
@@ -28,8 +29,12 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl">
       <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-6 border-r border-line p-5 lg:flex">
-        <Link href="/" className="font-display text-2xl font-medium">
-          Nasz ślub
+        <Link href="/" className="block leading-tight">
+          <span className="block font-display text-xl font-medium">Spryszyński</span>
+          <span className="block font-display text-xl font-medium">
+            <span className="text-gold">&amp;</span> Guzowska
+          </span>
+          <span className="mt-1 block text-xs text-muted italic">{BRAND.tagline}</span>
         </Link>
         <SideNav />
         <div className="mt-auto">
@@ -39,7 +44,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         </div>
       </aside>
       <main className="min-w-0 flex-1 px-4 pt-6 pb-24 sm:px-8 lg:pb-10">
-        <div className="no-print mb-4 flex justify-end lg:hidden">
+        <div className="no-print mb-4 flex items-center justify-between gap-4 lg:hidden">
+          <Link href="/" className="font-display text-lg font-medium">
+            S<span className="text-gold">&amp;</span>G
+          </Link>
           <Suspense>
             <UserBox />
           </Suspense>

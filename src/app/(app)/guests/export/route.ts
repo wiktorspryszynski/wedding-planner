@@ -15,7 +15,6 @@ export async function GET() {
     Dieta: g.diet ?? "",
     Alergie: g.allergies ?? "",
     Nocleg: g.needsAccommodation ? "tak" : "nie",
-    Transport: g.needsTransport ? "tak" : "nie",
     Telefon: g.phone ?? "",
     Stół: g.table ?? "",
     Tagi: g.tags.join(", "),

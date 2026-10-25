@@ -8,6 +8,13 @@
       "when": 1792956319763,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792958616113,
+      "tag": "0001_drop_guest_transport",
+      "breakpoints": true
     }
   ]
 }

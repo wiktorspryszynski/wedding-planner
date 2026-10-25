@@ -5,6 +5,7 @@ import { AutoSelect, DeleteButton, SubmitButton } from "@/components/client";
 import { Card, cx, Disclosure, Empty, Field, Input, PageHeader, Select, Skeleton } from "@/components/ui";
 import { db, schema } from "@/db";
 import { requireUser } from "@/lib/auth";
+import { guestName } from "@/lib/guests";
 import { loadGuests } from "../guests/data";
 import { SeatingCanvas, type SeatGuest, type SeatTable } from "./canvas";
 
@@ -28,7 +29,7 @@ async function Seating() {
     .filter((g) => g.rsvp !== "no")
     .map((g) => ({
       id: g.id,
-      name: `${g.firstName} ${g.lastName}`.trim(),
+      name: guestName(g),
       household: g.household,
       tableId: g.tableId,
       flag: [g.diet, g.allergies].filter(Boolean).join(", ") || undefined,

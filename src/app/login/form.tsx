@@ -12,7 +12,7 @@ export function LoginForm() {
       <Field label="Login">
         <Input name="login" autoComplete="username" required autoFocus defaultValue={state?.login} />
       </Field>
-      <Field label="HasĹ‚o">
+      <Field label="Hasło">
         <Input name="password" type="password" autoComplete="current-password" required />
       </Field>
       {state && <p className="text-sm text-danger">{state.error}</p>}

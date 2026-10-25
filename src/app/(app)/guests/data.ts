@@ -18,7 +18,7 @@ export function loadGuests() {
     .from(guests)
     .leftJoin(households, eq(guests.householdId, households.id))
     .leftJoin(tables, eq(guests.tableId, tables.id))
-    .orderBy(asc(households.name), asc(guests.lastName), asc(guests.firstName))
+    .orderBy(asc(households.name), asc(guests.id)) // within an invitation: order of entry
     .all();
   const links = d
     .select({ guestId: guestTagLinks.guestId, name: guestTags.name })
